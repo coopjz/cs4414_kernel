@@ -23,7 +23,29 @@ const char *entry_error_messages[] = {
     "SYNC_INVALID_EL0_32",		
     "IRQ_INVALID_EL0_32",		
     "FIQ_INVALID_EL0_32",		
-    "ERROR_INVALID_EL0_32"	
+    "ERROR_INVALID_EL0_32",	
+    
+    "SYNC_INVALID_EL2t",
+    "IRQ_INVALID_EL2t",
+    "FIQ_INVALID_EL2t",
+    "ERROR_INVALID_EL2T",
+
+    "SYNC_INVALID_EL2h",
+    "IRQ_INVALID_EL2h",
+    "FIQ_INVALID_EL2h",
+    "ERROR_INVALID_EL2h",
+
+    "SYNC_INVALID_EL1_64",
+    "IRQ_INVALID_EL1_64",
+    "FIQ_INVALID_EL1_64",
+    "ERROR_INVALID_EL1_64",
+
+    "SYNC_INVALID_EL1_32",
+    "IRQ_INVALID_EL1_32",
+    "FIQ_INVALID_EL1_32",
+    "ERROR_INVALID_EL1_32"
+
+
 };
 
 // Enables Core 0 Timers interrupt control for the generic timer 
@@ -39,6 +61,21 @@ void enable_interrupt_controller()
 void show_invalid_entry_message(int type, unsigned long esr, unsigned long address)
 {
     printf("%s, ESR: %x, address: %x\r\n", entry_error_messages[type], esr, address);
+}
+
+void show_EL1h_message()
+{
+    printf("Exception taken to EL1h\r\n");
+}
+
+void show_EL2_message()
+{
+    printf("Exception taken to EL2\r\n");
+}
+void show_EL()
+{
+    int el = get_el();
+	printf("Exception level: %d \r\n", el);
 }
 
 void handle_irq(void)

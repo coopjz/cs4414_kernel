@@ -26,7 +26,12 @@ master:
 	msr	spsr_el2, x0
 
 	adr	x0, el1_entry		
-	msr	elr_el2, x0			
+	msr	elr_el2, x0	
+
+	adr x0, vectors_el2
+	msr vbar_el2, x0
+	
+		//setup sp_el2 to 0x80000
 
 #else 						// Rpi3 hw boots from EL3. 
 	ldr	x0, =SCR_VALUE		// Secure config register. Only at EL3.

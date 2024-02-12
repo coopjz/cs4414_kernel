@@ -23,4 +23,24 @@
 #define FIQ_INVALID_EL0_32		14 
 #define ERROR_INVALID_EL0_32		15 
 
+#define SYNC_INVALID_EL2t        16
+#define IRQ_INVALID_EL2t         17
+#define FIQ_INVALID_EL2t         18
+#define ERROR_INVALID_EL2t       19
+
+#define SYNC_INVALID_EL2h        20
+#define IRQ_INVALID_EL2h         21
+#define FIQ_INVALID_EL2h         22
+#define ERROR_INVALID_EL2h       23
+
+#define SYNC_INVALID_EL1_64      24
+#define IRQ_INVALID_EL1_64       25
+#define FIQ_INVALID_EL1_64       26
+#define ERROR_INVALID_EL1_64     27
+
+#define SYNC_INVALID_EL1_32      28
+#define IRQ_INVALID_EL1_32       29
+#define FIQ_INVALID_EL1_32       30
+#define ERROR_INVALID_EL1_32     31
+
 #endif

@@ -21,13 +21,17 @@ void kernel_main(void)
 	// Or come up with your own method...
 
 	// a = a / 0; 
+	
 	// asm("mrs x0, elr_el2"); // will trigger exception at EL1
-	// asm("hvc #0");
+
+	asm("hvc #0");
+	//set stack pointer
 	// asm("msr	hcr_el2, x0");
 
-	//printf("going to call wfi...");
-	//asm("wfi");
-	//printf("we're back!");
+    // SYNC_INVALID_EL1h, ESR: 2000000, address: 80838
+	// printf("going to call wfi...");
+	// asm("wfi");
+	// printf("we're back!");
 
 	while (1) {
 		uart_send(uart_recv());

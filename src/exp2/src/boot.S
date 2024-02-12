@@ -6,7 +6,7 @@
 
 .globl _start
 _start:
-	mrs	x0, mpidr_el1		
+	mrs	x0, mpidr_el1		//moves the value of the Multiprocessor Affinity Register (MPIDR_EL1) into the general-purpose register x0
 	and	x0, x0,#0xFF		// Check processor id
 	cbz	x0, master			// Hang for all non-primary CPU
 	b	proc_hang
@@ -23,8 +23,9 @@ master:
 
 	// prep for the ``eret'' (exception return) instruction below. 
 
-#ifdef USE_QEMU 			// --> QEMU boots from EL2. cannot do things to EL3			
-	ldr	x0, =SPSR_VALUE		// spsr_el2 controls the consequence of exception return (eret), including the new exception level (EL1)
+#ifdef USE_QEMU 			// --> QEMU boots from EL2. cannot do things to EL3		
+	mov x0, #0	
+	//ldr	x0, =SPSR_VALUE		// spsr_el2 controls the consequence of exception return (eret), including the new exception level (EL1)
 	msr	spsr_el2, x0		// make sure to check out the def of SPSR_VALUE (include/arm/sysregs.h)
 
 	// Below, elr means ``exception link register''; and elr_el2 is its copy accessible at EL2. 
@@ -40,8 +41,11 @@ master:
 	// 		Aside: Now you tweak spsr_el2 so that the CPU will switch to EL0. But if the code following el1_entry contains 
 	//				instructions that are illegal at EL0 (e.g. MSR/MRS), CPU will trigger exceptions. 
 	//			    And since you haven't implemented any exception handlers, the kernel will enter la-la land...	
-
-	adr x0, el1_entry
+	; mov x0, #0
+	; msr spsr_el1, x0
+	; adr x0, el0_entry
+	; msr elr_el1, x0
+	adr x0, el2_entry
 	msr	elr_el2, x0
 #else 						// --> Rpi3 hw boots from EL3. 
 	ldr	x0, =SCR_VALUE		// Secure Configuration (EL3 only) 
@@ -66,3 +70,7 @@ el1_entry:
 	mov	sp, #LOW_MEMORY
 	bl	kernel_main		// kernel.c
 	b 	proc_hang		// should never come here
+el0_entry:
+	mrs x0, CurrentEL
+	lsr x0, x0, #2
+	b 	proc_hang	
