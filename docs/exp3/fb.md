@@ -13,17 +13,13 @@ This is optional for the course purpose. Thus, this write up is not intended to 
 
 **Rpi3**: need an HDMI cable connecting to a display. 
 
-**QEMU**: run QEMU locally as we need an emulated display. 
+**QEMU** (with Windows/Mac local machines): run QEMU with sdl support over X. QEMU must be configured with "--enable-sdl" and built. 
 
-**Windows users**: recommend to download prebuilt QEMU binaries. https://www.qemu.org/download/. You can build QEMU from source within WSL. I did that. Make sure to include graphics support. Likely slower than native binaries. 
+See here: https://docs.google.com/document/d/1MVOJzVWuJeYznnzXg1C6Pe6bLi1KlmXik2FiPB1mKlE/edit#heading=h.brve2j4duzqk
 
-To invoke prebuilt QEMU from PowerShell: 
+If you want to run QEMU locally, you can download prebuilt QEMU binaries. https://www.qemu.org/download/. To invoke prebuilt QEMU from PowerShell: 
 
 ![image-20210225131456228](image-20210225131456228.png)
-
-**Mac users**: Ditto. See link above. 
-
-**Linux users**: apt-get; if you build from source, make sure to include graphics support. 
 
 ## Quick start
 

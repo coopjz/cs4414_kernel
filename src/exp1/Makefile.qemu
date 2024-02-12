@@ -73,6 +73,8 @@ DEP_FILES = $(OBJ_FILES:%.o=%.d)
 
 # We use the `OBJ_FILES` array to build the `kernel8.elf` file. We use the linker script `src/linker.ld` to 
 # define the basic layout of the resulting executable image.
+#
+# "The memory dump will start at the load address of the lowest section copied into the output file" (`man objcopy`)
 kernel8.img: $(SRC_DIR)/linker-qemu.ld $(OBJ_FILES)
 	$(ARMGNU)-ld -T $(SRC_DIR)/linker-qemu.ld -o $(BUILD_DIR)/kernel8.elf  $(OBJ_FILES)
 	$(ARMGNU)-objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img

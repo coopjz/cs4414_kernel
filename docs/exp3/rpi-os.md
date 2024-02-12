@@ -53,7 +53,7 @@ In this article, we use ARM's broad definition of exceptions unless stated other
 
 ![](vectable_mem.png)
 
-*Figure above: the EL1 vector table as in memory. EL2 and EL3 each has a vector table like this.*
+*Figure above: the EL1 vector table as in memory. EL2 and EL3 each has a **separate** vector table like this.*
 
 **An exception vector** (or handler) is a piece of code the CPU will execute when a specific exception happens. "*These would normally be branch instructions that direct the core to the full exception handler.*" (the ARM64 manual). 
 
@@ -136,7 +136,7 @@ irq_vector_init:
 
 #### A simple handler for unexpected exceptions
 
-In this experiment we are only interested in handling `IRQ` that occurred at EL1h`. Yet, our kernel  defines all 16 handlers for EL1. This is for debugging ease: we want to print out meaningful message in case our kernel triggers some other exceptions due to our programming mistakes. 
+In this experiment we are only interested in handling `IRQ` that occurred at EL1h. Yet, our kernel  defines all 16 handlers for EL1. This is for debugging ease: we want to print out meaningful message in case our kernel triggers some other exceptions due to our programming mistakes. 
 
 We name all the handlers that are NOT supposed to be trigged  with a `invalid` postfix. We implement these handlers using a [handle_invalid_entry](https://github.com/fxlin/p1-kernel/blob/master/src/exp3/src/entry.S#L3) macro:
 
@@ -279,7 +279,7 @@ gen_timer_init:
 	ret
 ```
 
-This writes 1 to the control register (`CNTP_CTL_EL0`) of **the EL1 physical timer**. See [here](https://developer.arm.com/docs/ddi0595/latest/aarch64-system-registers/cntp_ctl_el0) for the register definition. 
+This writes 1 to the control register (`CNTP_CTL_EL0`) of **the EL1 physical timer**. Google "ddi0595 CNTP_CTL_EL0" for the register definition. 
 
 Note: some students observed that if at the time of writing to CNTP_CTL_EL0 the timer firing condition is met (i.e. TVAL is a negative value), an interrupt will be fired immediately. 
 If you experience the same thing, you should omit the spurious interrupt.

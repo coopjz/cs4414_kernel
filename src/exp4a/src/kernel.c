@@ -54,7 +54,7 @@ void kernel_main(void)
 
 	printf("kernel boots\r\n");	
 
-	// below, irq is off by default, b/c it is not needed for cooperative scheduling as
+	// Below, irq is off by default, b/c it is not needed for cooperative scheduling as
 	// in the proj description. but to implement things like sleep() it will be needed. 
 	// if so, enable irq and take care of irq handling
 	irq_vector_init();
@@ -80,7 +80,7 @@ void kernel_main(void)
 		return;
 	}
 
-	while (1){
+	while (1) {
 		schedule();
 	}	
 }

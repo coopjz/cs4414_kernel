@@ -20,7 +20,7 @@ master:
 	msr	sctlr_el1, x0		
 	
 	mrs x0, CurrentEL
-  lsr x0, x0, #2
+  	lsr x0, x0, #2
 	cmp x0, #3
 	beq el3
 

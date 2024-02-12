@@ -33,16 +33,19 @@ Please: do a `git pull` even if you have cloned the p1-kenel repo previously, in
 
 Each system call is a synchronous exception. A user program prepares all necessary arguments, and then runs `svc` instruction. Such exceptions are handled at EL1 by the kernel. The kernel validates all arguments, does the syscall, and exits from the exception. After that, the user task resumes at EL0 right after the `svc` instruction. 
 
+* EL0 files: sys.h and sys.S
+* EL1 files: sys.h and sys.c
+
 ![](figures/timeline-0.png)
 
-We have 4 simple syscalls: 
+We have 4 simple syscalls (cf. sys.h): 
 
 1. `write` outputs to UART. It accepts a buffer with the text to be printed as the first argument.
 1. `clone` creates a new user thread. The location of the stack for the newly created thread is passed as the first argument.
 1. `malloc` allocates a memory page for a user process. There is no analog of this syscall in Linux (and I think in any other OS as well.) The only reason that we have no virtual memory yet, and all user processes work with physical memory addresses. Each process needs a way to figure out which memory page can be used. `malloc` returns pointer to the newly allocated page or -1 in case of an error.
 1. `exit` Each process must call this syscall after it finishes execution. It will do cleanup.
 
-All syscalls are defined in `sys.c`. There is also an array [sys_call_table](https://github.com/fxlin/p1-kernel/blob/master/src/exp5/src/sys.c) that contains pointers to all syscall handlers. Each syscall has a "syscall number" — this is just an index in the `sys_call_table` array. All syscall numbers are defined [here](https://github.com/fxlin/p1-kernel/blob/master/src/exp5/include/sys.h#L6) — they are used by the assembler code to look up syscall. 
+An array [sys_call_table](https://github.com/fxlin/p1-kernel/blob/master/src/exp5/src/sys.c) (sys.c) contains pointers to all syscall handlers. Each syscall has a "syscall number" — this is just an index in the `sys_call_table` array. All syscall numbers are defined [here](https://github.com/fxlin/p1-kernel/blob/master/src/exp5/include/sys.h#L6) — they are used by the assembler code to look up syscall. 
 
 Let's use `write` syscall as an example: 
 
@@ -55,18 +58,18 @@ call_sys_write:
     ret
 ```
 
-Simple -- the wrapper stores the syscall number in the `w8` register and does `svc`. Convention: registers `x0` — `x7`are used for syscall arguments and `x8` is used to store syscall number. This allows a syscall to have up to 8 arguments.
+The wrapper stores the syscall number in the `w8` register and does `svc`. Convention: registers `x0` — `x7`are used for syscall arguments and `x8` is used to store syscall number. This allows a syscall to have up to 8 arguments.
 
 In commodity OSes, such wrapper functions are usually in user library such as [glibc](https://www.gnu.org/software/libc/) but not in the kernel. 
 
 ### Switching between EL0 and EL1
 
-We need this new mechanism. It's in the same spirit as we move from EL2/3 to EL1. (Recall: how did we do it?)
+Our kernel should support switches between EL1/EL1, and between EL1/EL0. 
 
-Previously, our kernel runs at EL1; when an interrupt occurs, it takes the interrupt at EL1. Now, we need to take exception (svc) from EL0 to EL1. To accommodate this, both `kernel_entry` and `kernel_exit` macros accepts an additional argument `el`, indicating the EL an exception is taken from. The information is required to properly save/restore stack pointer. Here are the two relevant parts from the `kernel_entry` and `kernel_exit` macros.
+Previously, our kernel runs at EL1; when an interrupt occurs, it takes the interrupt at EL1. Now, we need to take exception (svc) from EL0 to EL1. To accommodate this, both `kernel_entry` and `kernel_exit` macros accepts an additional argument `el`, indicating the EL an exception is taken from. The information is required to properly save/restore stack pointer. 
 
 ```assembly
-// kernel_entry
+// kernel_entry (entry.S)
 .if    \el == 0
 mrs    x21, sp_el0
 .else
@@ -83,13 +86,13 @@ msr    sp_el0, x21
 eret
 ```
 
-Even for the same task, we are using 2 distinct stacks for EL0 and EL1. This is a common design because we want to separate user/kernel. 
+Even for the same task, we are using 2 distinct stacks for EL0 and EL1. This is needed to separate user/kernel. 
 
 Supported by CPU hardware, after taking an exception from EL0 to EL1, the CPU automatically starts use the SP for EL1. The SP for EL0 can be found in the `sp_el0` register. 
 
 The value of this register must be stored and restored upon entering/exiting the kernel, even if the kernel does not  use `sp_el0` in the exception handler. Reason: we need to virtualize `sp_el0` for each task because each task has its own user stack. Try to visualize this in your mind. 
 
-When we do `kernel_exit`, how do we specify which EL to return to, EL0 or EL1? This EL level is encoded in the `spsr_el1` register that was saved, e.g. when syscall enters the kernel. So we always return to the level from which the exception was taken.
+When we do `kernel_exit`,  the EL to return to (EL0 or EL1) is encoded in the `spsr_el1` register that was saved, e.g. when syscall enters the kernel. So we always return to the level from which the exception was taken.
 
 > How did we treat SP when taking interrupts (from EL1)? Revisit the figures in previous experiments. 
 
@@ -115,6 +118,7 @@ el0_sync:
 * `esr_el1` (Exception Syndrome Register) is checked. This register contains "exception class" field at offset [ESR_ELx_EC_SHIFT](https://github.com/fxlin/p1-kernel/blob/master/src/exp5/include/arm/sysregs.h#L46). If exception class is equal to [ESR_ELx_EC_SVC64](https://github.com/fxlin/p1-kernel/blob/master/src/exp5/include/arm/sysregs.h#L47) this means that the current exception is caused by the `svc` instruction and it is a system call. In this case, we jump to `el0_svc` label and show an error message otherwise.
 
 ```
+// entry.S
 sc_nr   .req    x25                  // number of system calls
 scno    .req    x26                  // syscall number
 stbl    .req    x27                  // syscall table pointer

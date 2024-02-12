@@ -130,6 +130,7 @@ static int ind = 1;
 
 int do_mem_abort(unsigned long addr, unsigned long esr) {
 	unsigned long dfs = (esr & 0b111111);
+	/* whether the current exception is actually a translation fault.. */		
 	if ((dfs & 0b111100) == 0b100) {
 		unsigned long page = get_free_page();
 		if (page == 0) {

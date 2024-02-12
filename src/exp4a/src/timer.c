@@ -5,13 +5,13 @@
 #include "timer.h"
 
 #ifdef USE_QEMU
-unsigned int interval = (1 << 26); // xzl: around 1 sec
+int interval = (1 << 26); // xzl: around 1 sec
 #else
-unsigned int interval = 1 * 1000 * 1000; // xzl: around 1 sec
+int interval = 1 * 1000 * 1000; // xzl: around 1 sec
 #endif
 
-/* 	These are for Arm generic timer. 
-	They are fully functional on both QEMU and Rpi3 
+/* 	These are for Arm generic timers. 
+	They are fully functional on both QEMU and Rpi3.
 	Recommended.
 */
 void generic_timer_init ( void )

@@ -8,6 +8,6 @@ void generic_timer_init ( void );
 void handle_generic_timer_irq ( void );
 
 extern void gen_timer_init();
-extern void gen_timer_reset(unsigned int interval);
+extern void gen_timer_reset(int interval);
 
 #endif  /*_TIMER_H */

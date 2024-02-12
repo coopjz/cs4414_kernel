@@ -1,6 +1,22 @@
 Framebuffer animation driven by timer irqs. 
 also implemented a unified makefile
 
+## known to work
+local (windows native, wsl2, mac); remote X forwarding (wsl2)
+
+## known to break (Feb 2024)
+mac Quartz has issues:
+xl6yq@granger1 (master)[exp3-framebuffer]$ ./run.sh 
+libGL error: No matching fbConfigs or visuals found
+libGL error: failed to load driver: swrast
+X Error of failed request:  BadValue (integer parameter out of range for operation)
+  Major opcode of failed request:  149 (GLX)
+  Minor opcode of failed request:  3 (X_GLXCreateContext)
+  Value in failed request:  0x0
+  Serial number of failed request:  96
+  Current serial number in output stream:  97
+https://github.com/XQuartz/XQuartz/issues/144
+
 ## To build
 
 export USE_QEMU=1  # built for QEMU

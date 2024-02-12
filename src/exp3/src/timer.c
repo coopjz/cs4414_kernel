@@ -4,17 +4,17 @@
 #include "timer.h"
 
 #ifdef USE_QEMU
-unsigned int interval = (1 << 26); // xzl: around 1 sec
+int interval = (1 << 26); // xzl: around 1 sec
 #else
-unsigned int interval = 1 * 1000 * 1000; // xzl: around 1 sec
+int interval = 1 * 1000 * 1000; // xzl: around 1 sec
 #endif
 
-/* 	These are for Arm generic timer. 
-	They are fully functional on both QEMU and Rpi3 
+/* 	These are for Arm generic timers. 
+	They are fully functional on both QEMU and Rpi3. 
 	Recommended.
 */
 
-// xzl: CNTFRQ_EL0 reports the frequency of the system count
+/* CNTFRQ_EL0 reports the frequency of the system count */
 static unsigned int read_cntfrq(void)
 {
 	unsigned int val;
@@ -27,14 +27,14 @@ void generic_timer_init ( void )
 	unsigned int freq  = read_cntfrq();
 	printf("System count freq (CNTFRQ) is: %u\n", freq);
 
-	printf("interval is set to: %u\n", interval);
+	printf("interval is set to: %d\n", interval);
 	gen_timer_init();
 	gen_timer_reset(interval);
 }
 
 void handle_generic_timer_irq( void ) 
 {
-	printf("Timer interrupt received. next in %u ticks\n\r", interval);
+	printf("Timer interrupt received. next in %d ticks\n\r", interval);
 	gen_timer_reset(interval);
 }
 

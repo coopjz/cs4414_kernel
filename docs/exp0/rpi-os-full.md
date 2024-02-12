@@ -89,7 +89,7 @@ Grab the QEMU source.  Our QEMU is based on upstream v4.2 **with custom aarch64 
 ```
 git clone https://github.com/fxlin/qemu-cs4414.git qemu
 cd qemu
-./configure --target-list=aarch64-softmmu
+./configure --target-list=aarch64-softmmu -enable-sdl    # -sdl builds in UI support over X 
 make -j`nproc`
 export PATH="$(pwd)/aarch64-softmmu:${PATH}"
 ```
