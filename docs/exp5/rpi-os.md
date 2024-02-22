@@ -364,9 +364,10 @@ New addition is made to the middle of the [ret_from_fork](https://github.com/fxl
 .globl ret_from_fork
 ret_from_fork:
     bl    schedule_tail
-    cbz   x19, ret_to_user            // not a kernel thread
+    cbz   x19, ret_to_user            // not a kernel thread, go to ret_to_user
     mov   x0, x20
     blr   x19
+    // kernel thread returns, and continues below
 ret_to_user:
     bl disable_irq
     kernel_exit 0

@@ -151,7 +151,7 @@ As I mentioned in the previous section, each block descriptor contains a set of 
 
 **Memory attribute indirection** 
 
-ARMv8 architecture introduces `mair_el1` register. See [its definition](https://developer.arm.com/docs/ddi0595/b/aarch64-system-registers/mair_el1). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](https://github.com/fxlin/p1-kernel/blob/master/src/exp6/include/arm/mmu.h#L11) is the code that prepares values for the `mair` register.
+ARMv8 architecture introduces `mair_el1` register (Search for "mair_el1 ddi0595" for definition). This register consists of 8 slots, each spanning 8 bits. Each slot configures a common set of attributes. A descriptor then specifies just an index of the `mair` slot, instead of specifying all attributes directly. This allows using only 3 bits in the descriptor to reference a `mair` slot. We are using only a few of available attribute options. [Here](https://github.com/fxlin/p1-kernel/blob/master/src/exp6/include/arm/mmu.h#L11) is the code that prepares values for the `mair` register.
 
 ```
 // arm/mmu.h
@@ -757,7 +757,7 @@ void user_process()
 
 ### The familiar fork() semantics
 
-The code itself is very simple as we expect. Unlike `clone`, when doing `fork` we don't need to provide the function that needs to be executed in a new process. Also, the [fork wrapper function](https://github.com/fxlin/p1-kernel/blob/master/src/exp6/src/user_sys.S#L26) is much easier than the `clone` one. All of this is possible because of the fact that `fork` make a full copy of the process virtual address space, so the fork wrapper function return twice: one time in the original process and one time in the new one. At this point, we have two identical processes, with identical stacks and `pc` positions. The only difference is the return value of the `fork` syscall: it returns child PID in the parent process and 0 in the child process. Starting from this point both processes begin completely independent life and can modify their stacks and write different things using same addresses in memory - all of this without affecting one another.
+The code itself is very simple as we expect. Unlike `clone`, when doing `fork` we don't need to provide the function that needs to be executed in a new process. Also, the [fork wrapper function](https://github.com/fxlin/p1-kernel/blob/master/src/exp6/src/user_sys.S#L26) is much easier than the `clone` one. All of this is possible because of the fact that `fork` makes a full copy of the process virtual address space, so the fork wrapper function return twice: one time in the original process and one time in the new one. At this point, we have two identical processes, with identical stacks and `pc` positions. The only difference is the return value of the `fork` syscall: it returns child PID in the parent process and 0 in the child process. Starting from this point both processes begin completely independent life and can modify their stacks and write different things using same addresses in memory - all of this without affecting one another.
 
 ### Implementation
 
@@ -817,7 +817,7 @@ int copy_virt_memory(struct task_struct *dst) {
 }
 ```
 
-It iterates over `user_pages` array, which contains all pages, allocated by the current process. Note, that in `user_pages` array we store only pages that are actually available to the process and contain its source code or data; we don't include here page table pages, which are stored in `kernel_pages` array. Next, for each page, we allocate another empty page and copy the original page content there. We also map the new page using the same virtual address, that is used by the original one. This is how we get the exact copy of the original process address space.
+It iterates over `user_pages` array, which contains all pages, allocated by the current process. Note, that in `user_pages` array we store only pages that are actually available to the process and contain its code or data; we don't include here page table pages, which are stored in `kernel_pages` array. Next, for each page, we allocate another empty page and copy the original page content there. We also map the new page using the same virtual address, that is used by the original one. This is how we get the exact copy of the original process address space.
 
 All other details of the forking procedure work exactly in the same way, as they have been in the previous lesson.
 

@@ -5,7 +5,7 @@
 cpu_switch_to:
 	mov	x10, #THREAD_CPU_CONTEXT
 	add	x8, x0, x10
-	// now `x8` will contain a pointer to the current `cpu_contex`
+	// now `x8` will contain a pointer to the current `cpu_context`
 	mov	x9, sp
 	
 	// below: all callee-saved registers are stored in the order, in which they are defined in `cpu_context` structure
