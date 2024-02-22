@@ -1,0 +1,245 @@
+diff --git a/src/exp4a/include/sched.h b/src/exp4a/include/sched.h
+index 62f841b..668d8b4 100644
+--- a/src/exp4a/include/sched.h
++++ b/src/exp4a/include/sched.h
+@@ -22,7 +22,7 @@
+ */
+ #define TASK_RUNNING				0
+ /* TODO: define more task states (as constants) below, e.g. TASK_WAIT */
+-
++#define TASK_WAIT					1
+ extern struct task_struct *current;
+ extern struct task_struct * task[NR_TASKS];
+ extern int nr_tasks;
+@@ -51,6 +51,7 @@ struct task_struct {
+ 	long counter;	// how long this task has been running? decreases by 1 each timer tick. Reaching 0, kernel will attempt to schedule another task. Support our simple sched
+ 	long priority;	// when kernel schedules a new task, the kernel copies the task's  `priority` value to `counter`. Regulate CPU time the task gets relative to other tasks 
+ 	long preempt_count; // a flag. A non-zero means that the task is executing in a critical code region cannot be interrupted, Any timer tick should be ignored and not triggering rescheduling
++	long suspend_time; // the time when the task should be waken up
+ };
+ 
+ extern void sched_init(void);
+@@ -60,15 +61,16 @@ extern void schedule(void);
+ //extern void preempt_enable(void);
+ extern void switch_to(struct task_struct* next);
+ extern void cpu_switch_to(struct task_struct* prev, struct task_struct* next);
+-
++extern void sleep(int time);
+ // the initial values for task_struct that belongs to the init task. see sched.c 
+ #define INIT_TASK 									\
+ { 													\
+ 	{0,0,0,0,0,0,0,0,0,0,0,0,0}, 	/*cpu_context*/	\
+-	0,	/* state */									\
++	1,	/* state */									\
+ 	0,	/* counter */								\
+ 	1,	/* priority */								\
+-	0 	/* preempt_count */							\
++	0, 	/* preempt_count */							\
++	0	/* suspend_time */							\
+ }
+ 
+ #endif
+diff --git a/src/exp4a/src/kernel.c b/src/exp4a/src/kernel.c
+index 76a8598..d561717 100644
+--- a/src/exp4a/src/kernel.c
++++ b/src/exp4a/src/kernel.c
+@@ -16,7 +16,7 @@
+ #define CHAR_DELAY (1000000)
+ #endif
+ 
+-void process(char *array)
++void process_1(char *array)
+ {
+ #ifdef USE_LFB // (optional) determine the init locations on the graphical console
+ 	int scr_x, scr_y; 
+@@ -40,13 +40,51 @@ void process(char *array)
+ #endif
+ 			delay(CHAR_DELAY);
+ 		} 
+-		schedule(); // yield
++		printf(" process 1\n");
++		// schedule(); // yield
++		sleep(5);
++		
+ 	}
+ 
+ 	// For now, all the tasks run in an infinite loop and never returns. 
+ 	// We will handle task termination in future experiments
+ }
+ 
++void process_2(char *array)
++{
++#ifdef USE_LFB // (optional) determine the init locations on the graphical console
++	int scr_x, scr_y; 
++	char c; 
++	if (array[0] == '1') {
++		scr_x = 0; scr_y = 320; 
++	} else {
++		scr_x = 0; scr_y = 480; 
++	}
++#endif 
++
++	while (1){
++		for (int i = 0; i < 5; i++){
++			uart_send(array[i]);
++#ifdef USE_LFB  // (optional) output to the graphical console
++			c = array[i+1]; array[i+1]='\0';
++			lfb_print_update(&scr_x, &scr_y, array+i);
++			array[i+1] = c; 
++			if (scr_x > 1024)
++				lfb_print_update(&scr_x, &scr_y, "\n");
++#endif
++			delay(CHAR_DELAY);
++		} 
++		// schedule(); // yield
++		printf(" process 2\n");
++		sleep(9);
++		
++	}
++
++	// For now, all the tasks run in an infinite loop and never returns. 
++	// We will handle task termination in future experiments
++}
++
++
+ void kernel_main(void)
+ {
+ 	uart_init();
+@@ -60,7 +98,8 @@ void kernel_main(void)
+ 	irq_vector_init();
+ 	generic_timer_init();
+ 	enable_interrupt_controller();
+-	disable_irq();		
++	// disable_irq();	
++	enable_irq();	
+ 
+ #ifdef USE_LFB // (optional) init output to the graphical console
+ 	lfb_init(); 
+@@ -68,19 +107,21 @@ void kernel_main(void)
+ 	lfb_print(0, 240, "kernel boots");
+ #endif		
+ 
+-	int res = copy_process((unsigned long)&process, (unsigned long)"12345");
++	int res = copy_process((unsigned long)&process_1, (unsigned long)"12345");
+ 	if (res != 0) {
+ 		printf("error while starting process 1");
+ 		return;
+ 	}
+ 	
+-	res = copy_process((unsigned long)&process, (unsigned long)"abcde");
++	res = copy_process((unsigned long)&process_2, (unsigned long)"abcde");
+ 	if (res != 0) {
+ 		printf("error while starting process 2");
+ 		return;
+ 	}
++	printf("number of tasks: %d\n", nr_tasks);
+ 
+ 	while (1) {
+-		schedule();
++		// schedule();
++		sleep(0);
+ 	}	
+ }
+diff --git a/src/exp4a/src/sched.c b/src/exp4a/src/sched.c
+index 6d38e06..31c1f9b 100644
+--- a/src/exp4a/src/sched.c
++++ b/src/exp4a/src/sched.c
+@@ -10,10 +10,12 @@ int nr_tasks = 1;
+ void _schedule(void)
+ {
+ 	int next, c;
++	int running =0;
+ 	struct task_struct * p;
+ 	while (1) {
+ 		c = -1;	// the maximum counter found so far
+ 		next = 0;
++		running = 0;
+ 
+ 		/* Iterates over all tasks and tries to find a task in 
+ 		TASK_RUNNING state with the maximum counter. If such 
+@@ -22,25 +24,44 @@ void _schedule(void)
+ 
+ 		for (int i = 0; i < NR_TASKS; i++){
+ 			p = task[i];
+-			if (p && p->state == TASK_RUNNING && p->counter > c) { /* NB: p->counter always be non negative */
++			if (p && p->state == TASK_RUNNING)
++			{
++				++running;
++				if(p->counter > c) 
++				{ /* NB: p->counter always be non negative */
+ 				c = p->counter;
+ 				next = i;
++				}
+ 			}
+ 		}
+-		if (c) {	/* found a RUNNING/READY task w/ the most positive counter.  NB: c won't be -1 as counter always nonnegative */
++		// if (c) {	/* found a RUNNING/READY task w/ the most positive counter.  NB: c won't be -1 as counter always nonnegative */
++		// 	break;
++		// }
++		if(running>0&&c>0)
++		{
+ 			break;
+ 		}
+-
+ 		/* If no such task is found, this is either because i) no 
+ 		task is in TASK_RUNNING state or ii) all such tasks have 0 counters.
+ 		in our current implemenation which misses TASK_WAIT, only condition ii) is possible. 
+ 		Hence, we recharge counters. Bump counters for all tasks once. */
++
++	
++		if(running==0)
++		{
++			printf("No task is running. System idle\n");
++			asm("wfi");
++		}
++		else
++		{
++
+ 		for (int i = 0; i < NR_TASKS; i++) {
+ 			p = task[i];
+ 			if (p) {
+ 				p->counter = (p->counter >> 1) + p->priority; // The increment depends on a task's priority.
+ 			}
+ 		}
++		}
+ 
+ 		/* loops back to pick the next task */
+ 	}
+@@ -67,3 +88,12 @@ void schedule_tail(void) {
+ 	/* nothing */
+ }
+ 
++
++void sleep(int time)
++{
++	current->state = TASK_WAIT;
++	current->suspend_time = time;
++	schedule();
++
++}
++
+diff --git a/src/exp4a/src/timer.c b/src/exp4a/src/timer.c
+index d487c5f..f783d75 100644
+--- a/src/exp4a/src/timer.c
++++ b/src/exp4a/src/timer.c
+@@ -21,8 +21,17 @@ void generic_timer_init ( void )
+ 
+ void handle_generic_timer_irq( void ) 
+ {
+-	// TODO: In order to implement sleep(t), you should calculate @interval based on t, 
+-	// instead of having a fixed @interval which triggers periodic interrupts
++	struct task_struct * p;
++	for (int i = 0; i < NR_TASKS; i++){
++			p = task[i];
++			if(p && p->state == TASK_WAIT&&(p->suspend_time>0)){
++				p->suspend_time--;
++				if(p->suspend_time==0){
++					p->state = TASK_RUNNING;
++				}
++			}
++		}
+ 	gen_timer_reset(interval);	
+-	printf("Timer interrupt received. next in %u ticks\n\r", interval);
++
++	// printf("Timer interrupt received. next in %u ticks\n\r", interval);
+ }

@@ -21,8 +21,17 @@ void generic_timer_init ( void )
 
 void handle_generic_timer_irq( void ) 
 {
-	// TODO: In order to implement sleep(t), you should calculate @interval based on t, 
-	// instead of having a fixed @interval which triggers periodic interrupts
+	struct task_struct * p;
+	for (int i = 0; i < NR_TASKS; i++){
+			p = task[i];
+			if(p && p->state == TASK_WAIT&&(p->suspend_time>0)){
+				p->suspend_time--;
+				if(p->suspend_time==0){
+					p->state = TASK_RUNNING;
+				}
+			}
+		}
 	gen_timer_reset(interval);	
-	printf("Timer interrupt received. next in %u ticks\n\r", interval);
+
+	// printf("Timer interrupt received. next in %u ticks\n\r", interval);
 }

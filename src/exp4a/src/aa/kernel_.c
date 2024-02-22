@@ -98,8 +98,9 @@ void kernel_main(void)
 	irq_vector_init();
 	generic_timer_init();
 	enable_interrupt_controller();
-	// disable_irq();	
-	enable_irq();	
+	// disable_irq();
+	enable_irq();
+		
 
 #ifdef USE_LFB // (optional) init output to the graphical console
 	lfb_init(); 

@@ -8,7 +8,6 @@
  *  Reference: AArch64-referenc-manual p.2326 at
  *  https://developer.arm.com/docs/ddi0487/ca/arm-architecture-reference-manual-armv8-for-armv8-a-architecture-profile
  */
-
 .globl gen_timer_init
 gen_timer_init:
 	# Below, writes 1 to the control register (CNTP_CTL_EL0) of the EL1 physical timer
@@ -26,3 +25,10 @@ gen_timer_reset:
 	# which (roughly speaking) sets a "delta" for System Counter.
 	msr CNTP_TVAL_EL0, x0
     ret
+
+.globl get_timer_interval
+get_timer_interval:
+	# Read the current value of the EL1 physical timer
+	mrs x0, CNTP_TVAL_EL0
+	# get the lower 32 bits of the timer value
+	ret
