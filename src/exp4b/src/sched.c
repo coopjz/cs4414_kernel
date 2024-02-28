@@ -1,11 +1,19 @@
 #include "sched.h"
 #include "irq.h"
 #include "printf.h"
+#include "timer.h"
 
 static struct task_struct init_task = INIT_TASK;
 struct task_struct *current = &(init_task);
 struct task_struct * task[NR_TASKS] = {&(init_task), };
 int nr_tasks = 1;
+int stackcnt=0;
+
+struct switch_tracing switch_tracing_stack[SWITCH_TRACING_STACK_SIZE];
+
+struct switch_tracing *switch_tracing_head = switch_tracing_stack;
+struct switch_tracing *switch_tracing_tail = switch_tracing_stack;
+
 
 void preempt_disable(void)
 {
@@ -26,6 +34,19 @@ void _schedule(void)
 	preempt_disable(); 
 	int next,c;
 	struct task_struct * p;
+	if(stackcnt == 49)
+	{
+		disable_irq();
+		for (int i = 0; i < stackcnt; i++)
+		{
+			printf("%dms from task%d (PC 0X%X SP 0X%X) to task%d (PC 0X%X SP 0X%X)\r\n", \
+				switch_tracing_stack[i].time_stamp, switch_tracing_stack[i].prev_pid, \
+				switch_tracing_stack[i].prev_pc, switch_tracing_stack[i].prev_sp, \
+				switch_tracing_stack[i].next_pid, switch_tracing_stack[i].next_pc, \
+				switch_tracing_stack[i].next_sp);
+		}
+		enable_irq();
+	}
 	while (1) {
 		c = -1; // the maximum counter of all tasks 
 		next = 0;
@@ -58,6 +79,8 @@ void _schedule(void)
 			}
 		}
 	}
+	// printf("current task: %d",getpid() );
+	
 	switch_to(task[next]);
 	preempt_enable();
 }
@@ -74,7 +97,11 @@ void switch_to(struct task_struct * next)
 		return;
 	struct task_struct * prev = current;
 	current = next;
-
+	switch_tracing_stack[stackcnt].time_stamp = get_time_ms();
+	switch_tracing_stack[stackcnt].next_pid = getpid();
+	switch_tracing_stack[stackcnt].next_pc = next->pc_;
+	switch_tracing_stack[stackcnt].next_sp = next->sp_;
+	stackcnt++;
 	/*	 
 		below is where context switch happens. 
 
@@ -109,4 +136,17 @@ void timer_tick()
 	_schedule();
 	/* disable irq until kernel_exit, in which eret will resort the interrupt flag from spsr, which sets it on. */
 	disable_irq(); 
+}
+
+int getpid(void)
+{
+	//get the index of task in the task array
+	for (int i = 0; i < NR_TASKS; i++){
+		if (task[i] == current){
+			return i;
+		}
+	}
+	
+	return -1;
+	
 }

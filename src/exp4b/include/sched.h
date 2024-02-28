@@ -14,6 +14,7 @@
 
 #define TASK_RUNNING				0
 
+#define SWITCH_TRACING_STACK_SIZE 512
 extern struct task_struct *current;
 extern struct task_struct * task[NR_TASKS];
 extern int nr_tasks;
@@ -40,6 +41,25 @@ struct task_struct {
 	long counter; /* countdown for scheduling. higher value means having run for less. recharged in schedule(). decremented in timer_tick(). always non negative */
 	long priority;
 	long preempt_count;
+	unsigned long pc_;
+	unsigned long sp_;
+};
+struct switch_tracing {
+	unsigned long time_stamp;
+	int prev_pid;
+	int next_pid;
+	unsigned long prev_pc;
+	unsigned long next_pc;
+	unsigned long prev_sp;
+	unsigned long next_sp;
+};
+extern struct switch_tracing switch_tracing_stack[SWITCH_TRACING_STACK_SIZE];
+extern int stackcnt;
+extern struct switch_tracing *switch_tracing_head;
+extern struct switch_tracing *switch_tracing_tail;
+struct tracing_link_list {
+	struct switch_tracing *tracing;
+	struct tracing_link_list *next;
 };
 
 extern void sched_init(void);
@@ -49,6 +69,7 @@ extern void preempt_disable(void);
 extern void preempt_enable(void);
 extern void switch_to(struct task_struct* next);
 extern void cpu_switch_to(struct task_struct* prev, struct task_struct* next);
+extern int getpid(void);
 
 #define INIT_TASK \
 /*cpu_context*/	{ {0,0,0,0,0,0,0,0,0,0,0,0,0}, \

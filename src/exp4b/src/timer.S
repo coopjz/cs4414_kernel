@@ -16,3 +16,13 @@ gen_timer_init:
 gen_timer_reset:
 	msr CNTP_TVAL_EL0, x0
     ret
+
+.globl get_timer_count
+get_timer_count:
+	mrs x0, CNTPCT_EL0
+	ret
+
+.globl get_timer_freq
+get_timer_freq:
+	mrs x0, CNTFRQ_EL0
+	ret
