@@ -124,7 +124,11 @@ print (short[10])*mem_map
 ```
 b *0xffff0000
 ```
+### Disassemble at given addr
 
+```
+disas 0xffff0000
+```
 ### Function/source lookup
 
 Look up type of a given symbol 
@@ -142,7 +146,11 @@ List source at a given addr
 list *0x10000000
 list *fn 
 ```
-
+### Watchpoint 
+Will break if the given memory addr is altered 
+```
+watch *0xffff0000
+```
 ## The GDB "dashboard" enhancement
 
 The basic GDB UI is too primitive to beginners. We provide you an enhancement called GDB-dashboard. The upstream source is [here](https://github.com/fxlin/gdb-dashboard-aarch64). I adapted it for aarch64. Screenshot: 

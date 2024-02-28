@@ -146,7 +146,7 @@ el1_irq:
 ret_from_fork:
 	bl	schedule_tail
 	mov	x0, x20
-	blr	x19 		//should never return
+	blr	x19 		// goes to a task's body. should never return. what if it returns?
 
 .globl err_hang
 err_hang: b err_hang

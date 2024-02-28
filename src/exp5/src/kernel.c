@@ -59,6 +59,9 @@ void kernel_process(){
 	if (err < 0) {
 		printf("Error while moving process to user mode\n\r");
 	} 
+	// this func is called from ret_from_fork (entry.S). after returning, it goes back to 
+	// ret_from_fork and does kernel_exit there. hence, pt_regs populated by move_to_user_mode()
+	// will take effect. 
 }
 
 void kernel_main(void)
