@@ -73,6 +73,9 @@ extern void switch_to(struct task_struct* next);
 extern void cpu_switch_to(struct task_struct* prev, struct task_struct* next);
 extern void exit_process(void);
 
+// the initial values for task_struct that belongs to the init task. see sched.c 
+// NB: init task is in kernel, only has kernel mapping (ttbr1) 
+// 		no user mapping (ttbr0, mm->pgd=0)
 #define INIT_TASK \
 /*cpu_context*/ { { 0,0,0,0,0,0,0,0,0,0,0,0,0}, \
 /* state etc */	 0,0,15, 0, PF_KTHREAD, \

@@ -26,6 +26,8 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
 	} else {	
 		/* user task: will exit kernel to user level. So populate pt_regs which is at the task's kernel stack top */
 		struct pt_regs * cur_regs = task_pt_regs(current);
+		/* Copy cur_regs to childregs. It's a NOT bug, b/c it will be compiled to invocation of memcpy(), 
+			and our memcpy() has src/dst reversed. To reverse below, memcpy() has to be fixed as well...*/
 		*cur_regs = *childregs;
 		childregs->regs[0] = 0; /* return val of the clone() syscall */ 
 		childregs->sp = stack + PAGE_SIZE; 		/* the top of child's user-level stack */
