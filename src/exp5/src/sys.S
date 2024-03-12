@@ -49,3 +49,9 @@ thread_start:					/* we're the child ... */
 	/* We are done, pass the return value through x0.  */
 	mov	x8, #SYS_EXIT_NUMBER
 	svc	0x0
+
+.globl call_sys_get_el
+call_sys_get_el:
+	mov w8, #SYS_GET_EL_NUMBER
+	svc #0
+	ret

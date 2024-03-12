@@ -23,6 +23,23 @@ void user_process1(char *array)
 			call_sys_write(buf);
 			delay(DELAYS);
 		}
+		// return;
+	}
+}
+void user_process1_(char *array)
+{
+	// char buf[2] = {0};
+	char buf[70] = {0};
+	while (1){
+		// for (int i = 0; i < 5; i++){
+		// 	buf[0] = array[i];
+		// 	call_sys_write(buf);
+		// 	delay(DELAYS);
+		// }
+		tfp_sprintf(buf,"current at EL %d\r\n", call_sys_get_el());
+		call_sys_write(buf);
+		asm volatile("nop");
+		delay(DELAYS);
 	}
 }
 
@@ -45,7 +62,7 @@ void user_process(){
 		printf("Error while allocating stack for process 1\n\r");
 		return;
 	}
-	err = call_sys_clone((unsigned long)&user_process1, (unsigned long)"abcd", stack);
+	err = call_sys_clone((unsigned long)&user_process1_, (unsigned long)"abcd", stack);
 	if (err < 0){
 		printf("Error while clonning process 2\n\r");
 		return;

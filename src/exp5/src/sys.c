@@ -29,7 +29,9 @@ unsigned long sys_malloc(){
 void sys_exit(){
 	exit_process();
 }
-
+int sys_get_el(){
+	return get_el();
+}
 /* An array of pointers to all syscall handlers. 
 	Each syscall has a "syscall number" (sys.h) — which is just an index in this array */
-void * const sys_call_table[] = {sys_write, sys_malloc, sys_clone, sys_exit};
+void * const sys_call_table[] = {sys_write, sys_malloc, sys_clone, sys_exit, sys_get_el};

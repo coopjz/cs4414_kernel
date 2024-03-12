@@ -10,9 +10,10 @@ void process(char *array)
 {
 	while (1) {
 		for (int i = 0; i < 5; i++){
-			// uart_send(array[i]);
+			uart_send(array[i]);
 			delay(5000000);
 		}
+		return;
 	}
 }
 
@@ -20,7 +21,7 @@ void process2(char *array)
 {
 	while (1) {
 		for (int i = 0; i < 5; i++){
-			// uart_send(array[i]);
+			uart_send(array[i]);
 			delay(5000000);
 		}
 		
